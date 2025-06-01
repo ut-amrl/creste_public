@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "creste"
+version = "0.1.0"
+description = "CREStE: Scalable Mapless Navigation with Internet Scale Priors and Counterfactual Guidance"
+authors = [{name = "Arthur K Zhang", email = "arthurz@cs.utexas.edu"}]
+license = {text = "Apache-2.0"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.23",
+    "numba>=1.23",
+    "torch>=2.2",
+    "torchvision>=0.16",
+    "torchaudio>=2.2",
+    "PyYAML>=6.0",
+    "opencv-python>=4.6",
+    "tqdm>=4.64",
+    "scipy>=1.9",
+    "matplotlib>=3.6",
+    "kornia>=0.6",
+    "glfw>=2.5",
+    "vispy>=0.9",
+    "scikit-learn>=1.2",
+    "shapely>=2.0",
+    "transformers>=4.35",
+    "sentence-transformers>=2.2",
+    "supervision>=0.4",
+    "lightning>=2.0",
+    "open3d>=0.17",
+    "tensorboard>=2.12",
+    "wandb>=0.15",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "black", "ruff", "pre-commit"]
+
+# ↓  Because we're *not* using a src/ layout, we can let setuptools
+#    find packages automatically (this is actually the default), or
+#    keep it explicit:
+[tool.setuptools.packages.find]
+where = ["."]

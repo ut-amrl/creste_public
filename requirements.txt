@@ -1,0 +1,1 @@
+torch-scatter -f https://data.pyg.org/whl/torch-2.7.0+cu126.html

@@ -1,0 +1,90 @@
+project_name: 'Dinov2Distillation'
+run_name: 'EffNet_Depth_DS2'
+
+#---- BEGIN Model Settings  ----#
+
+# use_rgbd: True
+views: &views 1
+cams: &cams 1
+depth_embed_dim: &depth_embed_dim 256
+fdn_embed_dim: &fdn_embed_dim 128
+num_depth_bins: &num_depth_bins 128
+
+# Training specific
+monitor_metric: 'val/MSELoss/loss'
+monitor_mode: 'min'
+weights_path: ''
+ckpt_path: ''
+freeze_weights: False
+log_keys: [
+  "dino_pe_feats", "fimg_label", "depth_preds_metric"
+]
+
+
+# For depth discretization
+discretize: &discretize
+  mode: "UD"
+  num_bins: *num_depth_bins
+  depth_min: 300 # mm
+  depth_max: 25600 # mm
+
+vision_backbone:
+  class_name: "DistillationBackbone"
+  name: 'efficientnet-b0'
+  input_type: 'rgbd'
+  weights_path: ''
+  return_feats: True
+  effnet_cfgs:
+    in_channels: 4
+    out_channels: *depth_embed_dim # TerrainNet config
+    downsample: 4 # 8 is From TerrainNet Paper. Downsamples image_size by this factor 
+    image_size: [512, 612] # [256, 306]
+
+depth_head:
+  name: 'depthconv-head'
+  dims: [*depth_embed_dim, *num_depth_bins]
+  paddings: [1] # number of bins
+  kernels: [3]
+  norm_type: 'batch_norm'
+
+distillation_head:
+  name: 'distillation-head'
+  feature_head:
+    name: 'MultiLayerConv'
+    kernels: [1, 1, 1]
+    paddings: [0, 0, 0]
+    dims: [*depth_embed_dim, 128, 128, *fdn_embed_dim]
+    norm_type: 'batch_norm'
+
+#---- END Model Settings  ----#
+
+#---- BEGIN Train Settings  ----#
+batch_size: 4
+optimizer:
+  name: Adam
+  beta1: 0.9
+  beta2: 0.999
+  lr: 0.0005
+  eps: 0.0000001 # 10e-8
+lr_scheduler:
+  name: ExponentialLR
+  gamma: 0.98
+loss:
+  - name: "CrossEntropyDepth"
+    weight: 0.5
+    pred_key: "outputs/depth_preds_logits" # Class probabilities
+    lab_key: "inputs/depth_label"
+    discretize: *discretize
+  - name: "SmoothL1Depth"
+    weight: 0.1
+    pred_key: "outputs/depth_preds_bins" # Class index predictions
+    lab_key: "inputs/depth_label"
+    beta: 0.5
+    discretize: *discretize
+  - name: "MSELoss"      # Single View Dino Feature Match loss
+    weight: 1.0
+    pred_key: "outputs/dino_pe_feats"
+    lab_key: "inputs/fimg_label"
+    overlap_only: False # Enables pixel only loss
+
+#---- END Train Settings  ----#

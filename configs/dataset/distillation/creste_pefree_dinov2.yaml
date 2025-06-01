@@ -1,0 +1,50 @@
+root_dir: './data/creste'
+dino_dir: './data/creste'
+infill_strat: 'LAIDW'
+use_depth: True
+map_size: [25.6, 25.6] # Do not change
+voxel_size: [0.1, 0.1]  # Do not change
+map_range: [-12.8, -12.8, -2, 12.8, 12.8, 1] # xmin ymin zmin xmax ymax zmax
+img_h: 512 # KEEP CONSTANT
+img_w: 612 # KEEP CONSTANT
+ds_rgb: 1 # Downsamples images 4 times
+ds_gt_depth: 4 # Downsamples depth 24 times to fit in GPU memory
+fimg_shape: [128, 153, 128]
+model_type: "dinov2_vitb14"
+# skip_sequences: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+# skip_sequences: [6, 8, 13, 14, 15, 16, 17, 20]
+skip_sequences: []
+num_points: 131072
+overlap_thresholds: [0.3, 0.8]
+fload_keys: ['sequence', 'frame', 'image', 'depth_label', 'fimg_label', 'pose']
+sload_keys: ['p2p']
+task_cfgs:
+  - name: "distillation"
+    kwargs:
+      subdir: "data/creste/dinov2_vitb14_128_reduced/cam0"
+      model_type: "dinov2_vitb14"
+      feat_dim: 128
+      ext: "npy"
+datasets: 
+  - name: "distillation"
+    tasks: ["depth", "distillation"]
+    split_dir: 'data/creste/splits/distillation_standard'
+    # split_dir: 'data/creste/splits/mini'
+
+camera_augmentation:
+  brightness: 0.3
+  contrast: 0.3
+  saturation: 0.3
+  hue: 0.1
+  gamma: [0.7, 1.5]
+  gamma_p: 0.5
+pc_augmentation:
+  - name: "rotate"
+    max_rotation: 0.0 # degrees
+  - name: "translate"
+    max_translation: 0.0 # meters
+depth_augmentation:
+  dropout_prob: 0.05
+  calib_error_mean: [0.0, 0.0, 0.0] # tx ty theta
+  calib_error_std: [3.0, 3.0, 0.02] # stdx stdy stdtheta (pixels, radians)
+  depth_noise_std: 20.0 # LiDAR measurements error (mm)

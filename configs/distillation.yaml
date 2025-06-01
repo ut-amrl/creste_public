@@ -1,0 +1,5 @@
+defaults:
+  - dataset: distillation/creste_pefree_dinov2
+  - model: distillation/effnet_ds2_dinov2.yaml
+  - trainer: standard
+  - visualize: effnet_distillation

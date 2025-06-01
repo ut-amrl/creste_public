@@ -1,0 +1,75 @@
+root_dir: './data/creste'
+info_dir: './data/creste'
+infill_strat: 'LAIDW'
+scans: 1
+skip_factor: 2
+map_size: [25.6, 25.6] # Do not change
+voxel_size: [0.1, 0.1]  # Do not change
+map_range: [-12.8, -12.8, -2, 12.8, 12.8, 1] # xmin ymin zmin xmax ymax zmax
+skip_sequences: []
+img_h: 512
+img_w: 612
+ds_rgb: 1 # Downsamples images 8 times
+ds_gt_depth: 4 # Downsamples depth 24 times to fit in GPU memory
+fimg_shape: [128, 153, 128]
+views: 1 # Loads views horizon (minimum 1)
+remap_labels: False
+do_augmentation: True
+location_resampling: False
+resample_trajectories: True
+model_type: 'sam2'
+fload_keys: ['sequence', 'frame', 'image', 'depth_label', 'pose']
+sload_keys: ['p2p', 'fov_mask', '3d_sam_label', '3d_sam_dynamic_label', 'elevation_label', 'traversability_label', 'counterfactuals_label']
+validation_keys: []
+action_horizon: 50
+task_cfgs:
+  - name: "3d_sam"
+    kwargs:
+      subdir: "data/creste/sam2_map/static"
+      num_classes: 1
+      kernel_size: 3
+      ext: "npy"
+  - name: "3d_sam_dynamic"
+    kwargs:
+      subdir: "data/creste/sam2_map/dynamic"
+      num_classes: 3 # Instance ID, class ID, occupancy
+      kernel_size: 5
+      ext: "npy"
+  - name: "elevation"
+    kwargs:
+      subdir: "data/creste/sam2_map/geometric/elevation/labels"
+      num_classes: 2 # min/max elevation
+      ext: "bin"
+  - name: "traversability"
+    kwargs:
+      subdir: "data/creste/poses/dense"
+      num_views: 50
+      step_size: 1
+      num_classes: 0
+      ext: "txt"
+  - name: "counterfactuals"
+    kwargs:
+      num_classes: 10
+      ext: "pkl"
+datasets: 
+  - name: "joint"
+    tasks: ["3d_sam", "3d_sam_dynamic", "elevation", "traversability", "counterfactuals"]
+    split_dir: '' # Required override
+
+camera_augmentation:
+  brightness: 0.3
+  contrast: 0.3
+  saturation: 0.3
+  hue: 0.1
+  gamma: [0.7, 1.5]
+  gamma_p: 0.5
+pc_augmentation:
+  - name: "rotate"
+    max_rotation: 0.0 # degrees
+  - name: "translate"
+    max_translation: 0.0 # meters
+depth_augmentation:
+  dropout_prob: 0.05
+  calib_error_mean: [0.0, 0.0, 0.0] # tx ty theta
+  calib_error_std: [3.0, 3.0, 0.02] # stdx stdy stdtheta (pixels, radians)
+  depth_noise_std: 20.0 # LiDAR measurements error (mm)

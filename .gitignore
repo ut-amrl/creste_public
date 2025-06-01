@@ -1,0 +1,10 @@
+*.png
+*.jpg
+*.bin
+**/data/**
+**/model_ckpts/**
+**/outputs/**
+**/wandb/**
+**/*.egg-info/**
+**/checkpoints/**
+**/__pycache__/**

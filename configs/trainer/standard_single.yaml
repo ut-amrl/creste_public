@@ -1,0 +1,7 @@
+default_root_dir: 'model_ckpts'
+max_epochs: 50
+strategy: "ddp"
+accelerator: "gpu"
+devices: [0]
+num_workers: 6
+accumulate_grad_batches: 1 # don't accumulate grads

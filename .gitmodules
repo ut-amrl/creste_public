@@ -1,0 +1,6 @@
+[submodule "external/external/sam2"]
+	path = external/external/sam2
+	url = https://github.com/facebookresearch/sam2.git
+[submodule "external/sam2"]
+	path = external/sam2
+	url = https://github.com/facebookresearch/sam2.git
