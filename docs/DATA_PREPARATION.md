@@ -90,11 +90,3 @@ Run the following command to generate the traversability dataset for the reward 
 ```bash
 python scripts/preprocessing/create_traversability_dataset.py --indir ./data/creste --outdir ./data/creste/traversability
 ```
-
-
-
-# Packaging the dataset
-
-```bash
-python scripts/release/package_data.py --dataset_root ./data/creste_rlang --N 50 --W 100 --output_zip ./data/creste_mini_release.zip
-```

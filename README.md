@@ -6,6 +6,7 @@ This project implements **CREStE**, a scalable framework for open-world local pl
 
 [![Website](docs/badges/badge-website.svg)](https://amrl.cs.utexas.edu/creste)
 [![Paper](docs/badges/badge-pdf.svg)](https://arxiv.org/abs/2503.03921)
+[![Deployment](https://img.shields.io/badge/Watch-2km_deployment-blue?link=https%3A%2F%2Fyoutu.be%2FOzcYNURwjJQ%3Fsi%3Df20Lb959ZKbWWnv_)](https://youtu.be/OzcYNURwjJQ?si=f20Lb959ZKbWWnv_)
 
 Team:
 [Arthur Zhang](https://www.arthurkzhang.com/),
@@ -117,3 +118,15 @@ After preprocessing the dataset, you can start training the CREStE model. We pro
 
 After training CREStE, you can compile it for use with our realtime inference pipeline in C++. More instructions on this can be found in the last section of the [Training](./docs/TRAINING.md) section.
 
+## 🎓 Citation
+
+Please cite our papers:
+
+```bibtex
+@InProceedings{zhang2025crestescalablemaplessnavigation,
+  title={CREStE: Scalable Mapless Navigation with Internet Scale Priors and Counterfactual Guidance},
+  author={Arthur Zhang and Harshit Sikchi and Amy Zhang and Joydeep Biswas},
+  booktitle = {Robotics: Science and Systems (RSS)},
+  year={2025}
+}
+```
