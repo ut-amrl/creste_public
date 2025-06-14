@@ -1,24 +1,39 @@
-# CREStE: Counterfactuals for Reward Enhancement with Structured Embeddings
+# A Framework for Scalable Mapless Navigation
 
-This project implements CREStE, a scalable framework for open-world local planning using visual foundation models and counterfactual guidance. Using just 3 hours of expert demonstrations, CREStE can generalize to novel urban environments, enabling efficient navigation in complex settings. 
+This project implements **CREStE**, a scalable framework for open-world local planning using visual foundation models and counterfactual guidance. This work is published in the **Robotics Science and Systems (RSS) 2025** conference proceedings.
+
+## CREStE: Scalable Mapless Navigation with Internet Scale Priors and Counterfactual Guidance
+
+[![Website](docs/badges/badge-website.svg)](https://amrl.cs.utexas.edu/creste)
+[![Paper](docs/badges/badge-pdf.svg)](https://arxiv.org/abs/2503.03921)
+
+Team:
+[Arthur Zhang](https://www.arthurkzhang.com/),
+[Harshit Sikchi](https://hari-sikchi.github.io),
+[Amy Zhang](https://amyzhang.github.io)
+[Joydeep Biswas](https://www.joydeepb.com),
+
+We present CREStE, a scalable framework for mapless navigation that leverages internet scale priors from visual foundation models and counterfactual guidance for open-world local path planning. Notably, CREStE does not require exhaustively pre-enumerated lists of semantic classes and generalizes to novel urban environments with just 3 hours of expert demonstrations, and can be improved offline by simpling providing additional counterfactual annotations. Our approach runs in real-time on a single laptop GPU at 20Hz and acheives state-of-the-art performance, generalizing robustly to novel environments with just 3 hours of expert demonstrations.
 
 # 📢 News
 
+- 2025-06-14: Inital code and pretrained model release.
+- 2025-05-10: Spotlight Oral Presentation at ICRA Safe VLM Workshop 2025.
+- 2025-04-18: Spotlight Oral Presentation at Texas Regional Robotics Symposium (TEROS) 2025.
+- 2025-04-10: Paper accepted to Robotics Science and Systems (RSS) 2025.
+- 2025-03-04: Best Student Paper Award at UT AI x Robotics Symposium 2025.
+- 2025-03-01: Initial website and paper release.
 
 # 🚀 Usage
 
-Despite being trained on a single robot embodiment on just 3 hours of data, CREStE generalizes remarkably well to novel embodiments and sensor configurations. To download the pretrained model weights for the following modalities, please visit the [Hugging Face model hub](https://huggingface.co/arthurz/crest_e). You may also download the pre-trained torch jit models by running the commands below:
+Despite being trained on a single robot embodiment on just 3 hours of data, CREStE generalizes remarkably well to novel embodiments and sensor configurations. To download the pretrained model weights for the monocular RGB + LiDAR modality, run the commands below:
 
 ```bash
 # Monocular RGB + LiDAR
-bash ./scripts/download_weights.sh creste_rgb_lidar
-# Stereo RGB
-bash ./scripts/download_weights.sh creste_stereo_rgb
-# Monocular RGB
-bash ./scripts/download_weights.sh creste_mono_rgb
+bash ./scripts/release/download_weights.sh creste_rgbd
 ```
 
-To run the CREStE model in realtime, we recommend using our sister repository: [creste_realtime](https://github.com/ut-amrl/creste_realtime). This repository provides an efficient C++ implementation of the inference pipeline in ROS1, free from any complicated python dependencies. 
+To run the CREStE model in realtime, we recommend using our sister repository: [creste_realtime](https://github.com/ut-amrl/creste_realtime). This repository provides an efficient C++ implementation of the inference pipeline in ROS1, free from any complex python dependencies. 
 
 ```bash
 git clone https://github.com/ut-amrl/creste_realtime
@@ -95,108 +110,10 @@ Before training, you will need to preprocess the dataset to generate the necessa
 
 # 📊 Training
 
+After preprocessing the dataset, you can start training the CREStE model. We provide full details on how to train the model in the [Training](./docs/TRAINING.md) section. At a high level, we train CREStE in three steps:
+1. **RGB-D Backbone**: Train the RGB-D backbone using the Dinov2 distillation method.
+2. **BEV Backbone**: Train the BEV backbone using the Dinov2 distillation method with SAM2 instance labels and elevation maps.
+3. **Reward Function**: Train the reward function using MaxEnt IRL with the pretrained BEV backbone, and then refine it with counterfactual annotations using Counterfactual IRL.
 
+After training CREStE, you can compile it for use with our realtime inference pipeline in C++. More instructions on this can be found in the last section of the [Training](./docs/TRAINING.md) section.
 
-## Datasets
-
-### CODa
-
-To use our models on the UT Campus Object Dataset (CODa), you will need to first create
-a data folder and add the CODa files to it. To do this, execute the following commands
-from the root directory of this project to symlink CODa.
-
-```bash
-mkdir data
-ln -s /robodata/arthurz/Research/CompleteNet/data/coda ./data/coda
-```
-
-## Creating CODa SSC from scratch
-
-### Build the single frame depth inputs
-
-Depth inputs for semistatic scenes
-```bash
-python tools/build_dense_depth.py --scans 1 --proc LA --dataset_type semistatic
-```
-
-Depth inputs for semantic segmentation scenes
-```bash
-python tools/build_dense_depth.py --scans 1 --proc LA --dataset_type semanticsegmentation
-```
-
-### Build the ground truth depth inputs
-
-We use the IDW infilling method to create the ground truth depth inputs for the semistatic scenes. This method uses semi-global stereo matching to filter accumulated LiDAR point clouds and IDW infilling to further densify the depth input.
-
-Depth labels for semistatic scenes
-```bash
-python tools/build_dense_depth.py --scans 50 --proc IDW --dataset_type semistatic
-```
-
-Depth inputs for semantic segmentation scenes
-```bash
-python tools/build_dense_depth.py --scans 50 --proc IDW --dataset_type semanticsegmentation
-```
-
-Depth inputs for all scenes
-```bash
-python tools/build_dense_depth.py --scans 50 --proc IDW --dataset_type all
-```
-
-### Preprocessing depth images for faster loading
-
-This saves downsampled versions of the input and label depth images to disk for faster loading during training. It results in ~20% faster loading.
-
-Depth labels for semistatic scenes
-```bash
-python tools/preprocess_dataset.py
-```
-
-### Building ground truth semantic segmentation and elevation maps
-
-This builds ground truth semantic scene completion maps for terrain segmentations. It uses annotated lidar
-point clouds to create the ground truth labels.
-
-## Using Labels
-
-Semantic Ground Truth
-```bash
-python tools/build_semantic_map.py \
-    --cfg ./configs/dataset/coda.yaml \
-    --out_dir ./postprocess/build_map_outputs/codasemantics \
-    --save_type semantic \
-    --vis True
-```
-
-Elevation Ground Truth
-```bash
-python tools/build_semantic_map.py \
-    --cfg ./configs/dataset/coda.yaml \
-    --out_dir ./postprocess/build_map_outputs/codaelevation \
-    --save_type elevation \
-    --vis True
-```
-
-## Without Labels
-```bash
-python tools/build_feature_map.py \
-    --cfg ./configs/dataset/distillation/coda_pefree_dinov1.yaml \
-    --out_dir ./postprocess/build_map_outputs/elevation \
-    --feat_type geometric \
-    --tasks elevation \
-    --vis True
-```
-
-## Computing class frequencies for object detection
-
-Computes sam dynamic general class frequencies
-```bash
-python tools/compute_weights.py --cfg_file configs/dataset/ssc_sam/coda_sam2elev_joint_ds2.yaml --out_dir data/coda_rlang --task 3d_sam_dynamic
-```
-
-## Generating depth images
-
-# 50 LiDAR Accum + SD Filtering
-```bash
-python tools/build_dense_depth.py --scans 50 --proc PASS --dataset_type single --verbose
-```

@@ -607,7 +607,7 @@ def visualize_rgbd_bev(rgbd_th, p2p_th, map_res, map_sz, map_origin, num_scans=1
         [0, 0, 0, 1]
     ]).float()
 
-    from models.blocks.splat_projection import Camera2World
+    from creste.models.blocks.splat_projection import Camera2World
     cam2world = Camera2World()
     for b in range(0, BT):  # Iterate over pairs of frames
         for i in range(num_cams):  # Within each pair, iterate over the two frames
@@ -1097,8 +1097,10 @@ def visualize_bev_policy(policy, start=None, goal=None, img=None, batch_idx=0):
     # Convert the plot to an OpenCV image
     canvas = FigureCanvas(fig)
     canvas.draw()
-    img = np.frombuffer(canvas.tostring_rgb(), dtype='uint8')
-    img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    w, h = fig.canvas.get_width_height()
+    buf = np.frombuffer(fig.canvas.buffer_rgba(), dtype='uint8')
+    rgba = buf.reshape(h, w, 4)          # H × W × 4
+    img  = rgba[..., :3]                 # drop alpha if not needed
     img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
     plt.close(fig)  # Close the figure to free memory

@@ -989,42 +989,6 @@ class MaxEntIRLLoss(Loss):
 
         self.l1_loss = torch.nn.L1Loss(reduction='mean')
 
-    # @staticmethod
-    # def compute_expert_visitation(gt, map_ds, map_sz):
-    #     """
-    #     Compute mean expert feature visitation frequencies
-    #     Inputs:
-    #         gt - [B, T, 3, 3] tensor of expert SE(2) poses in BEV
-    #     Outputs:
-    #         xy - [B, T, 2] tensor of visitation indices
-    #         visit_counts - [B, H, W] tensor of visitation counts (normalized from to [0, 1])
-    #     """
-    #     if gt.ndim == 3:
-    #         B, T, _ = gt.shape
-    #         xy = gt
-    #     else:
-    #         B, T, _, _ = gt.shape
-    #         xy = gt[:, :, :2, 2]
-
-    #     # Preprocess export poses to visitation indices
-    #     xy = xy.long() // map_ds  # [B, T, 2]
-    #     x_coords = xy[:, :, 0].clamp(0, map_sz[0]-1)
-    #     y_coords = xy[:, :, 1].clamp(0, map_sz[1]-1)
-    #     xy_indices = x_coords * map_sz[1] + y_coords  # [B, T]
-
-    #     H, W = map_sz
-
-    #     # Compute visitation counts, removing duplicate states
-    #     visit_counts = torch.zeros(B, H*W, dtype=torch.long, device=gt.device)
-    #     visit_counts[torch.arange(B).unsqueeze(1).expand(-1, T).flatten(), xy_indices.flatten()] = 1
-    #     visit_counts = visit_counts.view(B, H, W)
-    #     # visit_counts = torch.zeros(B, H*W, dtype=torch.long, device=gt.device)
-    #     # visit_counts = torch.scatter_add(
-    #     #     visit_counts, 1, xy_indices, torch.ones_like(xy_indices))
-    #     # visit_counts = visit_counts.view(B, H, W)
-    #     import pdb; pdb.set_trace()
-    #     return xy, visit_counts.float()  # Keep in same scale as predicted visitation
-
     @staticmethod
     def compute_expert_visitation(gt, map_ds, map_sz):
         """
@@ -1120,15 +1084,10 @@ class MaxEntIRLLoss(Loss):
         max_steps = torch.ceil(distances).long().max().item()  # Determine max interpolation steps
 
         # Create interpolation factors [0, 1, ..., 1] for max_steps
-        # t_factors = torch.linspace(0, 1, max_steps, device=gt.device).view(1, 1, -1)  # [1, 1, max_steps]
         t_factors = torch.linspace(0, 1, max_steps, device=gt.device).view(1, 1, -1, 1)  # [1, 1, max_steps, 1]
-
-        # Interpolate points along line segments
         interpolated_points = (
             start_points.unsqueeze(2) + t_factors * (end_points - start_points).unsqueeze(2)
         )  # [B, T-1, max_steps, 2]
-
-        # Reshape interpolated points into a single list
         interpolated_points = interpolated_points.view(B, -1, 2)  # [B, (T-1)*max_steps, 2]
 
         # Append the last point for each trajectory to preserve T horizon

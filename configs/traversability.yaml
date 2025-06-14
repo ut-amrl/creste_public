@@ -1,0 +1,4 @@
+defaults:
+  - dataset: traversability/creste_sam2elevtraverse_horizon
+  - model: traversability/terrainnet_maxentirlcf_msfcn_sam2dynsemelev
+  - trainer: standard_single

@@ -60,7 +60,7 @@ class FoundationBackbone(nn.Module):
 
     def load_weights(self, weights_path):
         print(f"Loading weights from {weights_path}")
-        state_dict = torch.load(weights_path)['state_dict']
+        state_dict = torch.load(weights_path, weights_only=False)['state_dict']
  
         # Filter out unnecessary model key prefix from training on pytorch lightning
         state_dict = {k.replace('model.', '', 1): v for k, v in state_dict.items() if k.startswith('model.')}

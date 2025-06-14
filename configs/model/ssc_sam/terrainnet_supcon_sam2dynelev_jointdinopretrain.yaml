@@ -1,0 +1,137 @@
+project_name: 'TerrainNetSAM'
+run_name: 'depth128UD_jointdinopretrain_sam2dynelev_supcon_joint'
+
+#---- BEGIN Model Settings  ----#
+
+load_setting: "strict"
+use_temporal: False
+use_movability: False
+multiview_distillation: False
+depth_embed_dim: &depth_embed_dim 256
+fdn_embed_dim: &fdn_embed_dim 128
+num_depth_bins: &num_depth_bins 128
+inpainting_sam_dim: &inpainting_sam_dim 32
+num_obj_class: &num_obj_class 6
+weights_path: ''
+views: &views 1
+
+# For depth discretization
+discretize: &discretize
+  mode: "UD"
+  num_bins: *num_depth_bins
+  depth_min: 300 # mm
+  depth_max: 25600 # mm
+
+vision_backbone:
+  class_name: "DistillationBackbone"
+  name: 'efficientnet-b0'
+  input_type: 'rgbd'
+  weights_path: '' # Dinov1 PEFree pretrained
+  return_feats: True
+  effnet_cfgs:
+    in_channels: 4
+    out_channels: *depth_embed_dim # TerrainNet config
+    downsample: 4 # 8 is From TerrainNet Paper. Downsamples image_size by this factor 
+    image_size: [512, 612] # [256, 306]
+
+camera_projector:
+  name: 'Cam2MapMulti'
+  voxel_size: [0.1, 0.1, 3] # xyz
+  point_cloud_range: [-12.8, -12.8, -2, 12.8, 12.8, 1] # 2m max height
+  embed_z: True
+  z_embed_dim: 32
+  z_embed_mode: 'mlp'
+  num_cams: 1
+  splat_key: 'depth_preds_feats' # Change to depth_preds_feats to use depth features
+  vision_fusion:
+    name: 'ConvEncoder'
+    dims: [288, 96] # depth_embed_dim + z_embed_dim
+    kernels: [1]
+    paddings: [0]
+    norm_type: 'batch_norm'
+
+depth_head:
+  name: 'depthconv-head'
+  dims: [*depth_embed_dim, *num_depth_bins]
+  kernels: [3]
+  paddings: [1] # number of bins
+  norm_type: 'batch_norm'
+
+distillation_head:
+  name: 'distillation-head'
+  feature_head:
+    name: 'MultiLayerConv'
+    kernels: [1, 1, 1]
+    paddings: [0, 0, 0]
+    dims: [*depth_embed_dim, 128, 128, *fdn_embed_dim]
+    norm_type: 'batch_norm'
+
+bev_classifier:
+  name: 'InpaintingResNet18MultiHead'
+  net_kwargs:
+    input_key: 'bev_features'
+    num_input_features: 96
+    num_classes: [*inpainting_sam_dim, *num_obj_class, 2]
+    output_prefix: ['inpainting_sam', 'inpainting_sam_dynamic', 'elevation']
+
+#---- END Model Settings  ----#
+
+
+#---- BEGIN Train Settings  ----#
+batch_size: 8 # smaller batch size improves convergence
+optimizer:
+  name: Adam
+  beta1: 0.9
+  beta2: 0.999
+  lr: 0.0005
+lr_scheduler:
+  name: ExponentialLR
+  gamma: 0.98
+monitor_metric:
+  name: 'val/SupPixelConLoss/joint/3d_sam_label/supcon/sem_loss'
+  mode: "min"
+loss:
+  - name: "SupPixelConLoss" # Static SAM
+    views: *views
+    weight: 1.0 # In range of 0-1
+    pred_key: "outputs/inpainting_sam_preds"
+    lab_key: "inputs/3d_sam_label"
+    ignore_index: 0
+    temperature: 0.1
+    task: "joint"
+    contrast_mode: "batch_all"
+  # - name: "FocalLoss" # Dynamic SAM
+  - name: "CrossEntropy"
+    weight: 2.0
+    pred_key: "outputs/inpainting_sam_dynamic_preds"
+    lab_key: "inputs/3d_sam_dynamic_label"
+    num_class: *num_obj_class
+    class_weights: "data/creste/class_weights_3d_sam_dynamic_6.txt"
+    # ignore_index: 0 # Commented out since bg is a valid class
+    class_dim: 1
+    task: "joint"
+  - name: "MSELoss"      # Single View Dino Feature Match loss
+    weight: 2.0
+    pred_key: "outputs/dino_pe_feats"
+    lab_key: "inputs/fimg_label"
+    overlap_only: False # Enables pixel only loss
+  - name: "CrossEntropyDepth" # Depth Cls
+    weight: 0.5
+    pred_key: "outputs/depth_preds_logits" # Class probabilities
+    lab_key: "inputs/depth_label"
+    discretize: *discretize
+  - name: "SmoothL1Depth" # Depth Reg
+    weight: 0.1
+    pred_key: "outputs/depth_preds_metric" # Class index predictions
+    lab_key: "inputs/depth_label"
+    beta: 0.5
+    discretize: *discretize
+  - name: "SmoothL1" # Elevation reg
+    weight: 3.0
+    beta: 0.2
+    pred_key: "outputs/elevation_preds"
+    lab_key: "inputs/elevation_label"
+    absolute: False # Predict relative elevation from min elevation
+    task: "joint"
+
+#---- END Train Settings  ----#

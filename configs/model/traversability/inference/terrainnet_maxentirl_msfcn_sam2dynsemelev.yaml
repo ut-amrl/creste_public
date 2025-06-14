@@ -1,0 +1,94 @@
+project_name: 'TraversabilityLearning'
+# run_name: 'terrainnet_dinopretrain_maxentirl_msfcn_sam2semelev' # old
+run_name: 'terrainnet_dinopretrain_maxentirl_msfcn_sam2dynsemelev'
+
+# Only specify to continue training
+ckpt_path: ''
+weights_path: ''
+load_strict: True
+freeze_weights: True
+map_ds: &map_ds 2
+views: 1 # Number of input frames
+action_horizon: 50 # Policy horizon
+policy_method: &policy_method 'pp'
+policy_kwargs:
+  method: "sharpen" # [gumbel, sharpen] only need to set temperature for hard
+  temperature: 0.005 # low randomness
+solve_mdp: &solve_mdp False
+
+# Make sure to set weights and freeze them in the terrainnet config
+defaults:
+  - _self_
+  - ssc_sam@vision_backbone: terrainnet_supcon_sam2dynelev_jointdinopretrain.yaml
+
+traversability_head: # TODO: Implement this model
+  name: MaxEntIRL
+  value_iterator: VIN
+  feats_dim: &feats_dim 40 # Terrains, Dynamic, Elevation min/max
+  map_size: 128
+  policy_method: *policy_method
+  net_kwargs:
+    reward_cfg:   
+      name: "MultiScaleFCN"
+      ds: *map_ds
+      input_keys: ["inpainting_sam_preds", "inpainting_sam_dynamic_preds", "elevation_preds"]
+      output_prefix: ["traversability_preds"]
+      net_kwargs:
+        prepool:
+          dims: [*feats_dim, 64, 32]
+          kernels: [5, 3]
+          stride: [1, 1]
+          # padding: [2, 1]
+          norm_type: 'batch_norm'
+        skip:
+          dims: [32, 32, 16]
+          kernels: [3, 1]
+          stride: [1, 1]
+          # padding: [1, 0]
+          norm_type: 'batch_norm'
+        trunk:
+          dims: [32, 32, 32]
+          kernels: [3, 1]
+          stride: [1, 1]
+          # padding: [1, 0]
+          norm_type: 'batch_norm'
+        postpool:
+          dims: [48, 1]
+          kernels: [1]
+          stride: [1]
+          # padding: [0]
+          norm_type: 'batch_norm'
+    qvalue_cfg:
+      dims: [1, 8] # 8 connected action space
+      kernels: [3]
+      stride: [1]
+      padding: [1]
+      input_keys: ["traversability"]
+      norm_type: 'batch_norm'
+      discount: 0.99
+
+#---- BEGIN Train Settings  ----#
+batch_size: 10 # 50GB
+optimizer:
+  name: Adam
+  beta1: 0.9
+  beta2: 0.999
+  lr: 0.0005
+lr_scheduler:
+  name: ExponentialLR
+  gamma: 0.96
+monitor_metric:
+  name: 'val/MaxEntIRLLoss/maxentirl_loss'
+  mode: "min"
+loss:
+  - name: "MaxEntIRLLoss"
+    weight: 1.0
+    map_ds: *map_ds
+    map_sz: [64, 128]
+    maxent_weight: 1.0
+    reward_weight: 0.01
+    pred_key: "outputs/exp_svf"
+    fov_key: "inputs/fov_mask"
+    lab_key: "inputs/traversability_label"
+
+#---- END Train Settings  ----#

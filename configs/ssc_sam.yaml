@@ -1,0 +1,4 @@
+defaults:
+  - dataset: ssc_sam/creste_sam2elev_joint_dinov2
+  - model: ssc_sam/terrainnet_supcon_sam2dynelev_jointdinopretrain
+  - trainer: standard

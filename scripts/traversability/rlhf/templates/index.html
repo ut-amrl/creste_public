@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trajectory Labelling Tool</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        #label-list {
+            border: 1px solid black;
+            width: 200px;
+            overflow-y: scroll;
+            float: left;
+            margin-right: 20px;
+            max-height: 500px;
+            /* Set a maximum height if necessary */
+        }
+
+        #label-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #label-list li {
+            padding: 5px;
+            cursor: pointer;
+        }
+
+        #label-list li:hover {
+            background-color: #f0f0f0;
+        }
+
+        #plot-container {
+            float: left;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Trajectory Ranking Tool</h1>
+    <button id="next-btn">Next Sample</button>
+    <button id="generate-btn">Regenerate Trajectories</button>
+    <button id="save-btn">Save Labels</button>
+
+    <!-- Input for manual index jump -->
+    <div>
+        <input type="number" id="trajectory-index-input" placeholder="Enter Trajectory Index">
+        <button id="go-to-index-btn">Go To Index</button>
+    </div>
+
+    <!-- Display sequence and frame -->
+    <div>
+        <p id="seq-frame-display">Sample Index: N/A, Sequence: N/A, Frame: N/A</p>
+    </div>
+
+    <div id="label-list">
+        <h3>Trajectory List</h3>
+        <ul id="trajectory-list">
+            <!-- List items will be added dynamically -->
+        </ul>
+    </div>
+
+    <div id="plot-container">
+        <h3>BEV Plot</h3>
+        <div id="bev-plot" style="width: 600px; height: 600px;"></div>
+        <h3>Front View</h3>
+        <img id="front-image" src="" alt="Front View" style="border: 1px solid black;" />
+    </div>
+
+    <div id="custom-alert"
+        style="display:none; position:fixed; bottom:20px; right:20px; background-color:#4CAF50; color:white; padding:15px; border-radius:5px;">
+    </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/plot_trajectories.js') }}"></script>
+</body>
+
+</html>

@@ -97,7 +97,7 @@ class DistillationBackbone(nn.Module):
         """
         print(f"Loading model weights from {weights_path}")
         
-        state_dict = torch.load(weights_path)['state_dict']
+        state_dict = torch.load(weights_path, weights_only=False)['state_dict']
 
         # TODO: Fix this hack for loading weights
         state_dict = {k.replace('model.', '', 1): v for k, v in state_dict.items() if k.startswith('model.')}
