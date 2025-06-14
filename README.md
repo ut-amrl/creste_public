@@ -2,6 +2,7 @@
 
 This project implements **CREStE**, a scalable framework for open-world local planning using visual foundation models and counterfactual guidance. This work is published in the **Robotics Science and Systems (RSS) 2025** conference proceedings.
 
+
 ## CREStE: Scalable Mapless Navigation with Internet Scale Priors and Counterfactual Guidance
 
 [![Website](docs/badges/badge-website.svg)](https://amrl.cs.utexas.edu/creste)
@@ -15,6 +16,8 @@ Team:
 [Joydeep Biswas](https://www.joydeepb.com),
 
 We present CREStE, a scalable framework for mapless navigation that leverages internet scale priors from visual foundation models and counterfactual guidance for open-world local path planning. Notably, CREStE does not require exhaustively pre-enumerated lists of semantic classes and generalizes to novel urban environments with just 3 hours of expert demonstrations, and can be improved offline by simpling providing additional counterfactual annotations. Our approach runs in real-time on a single laptop GPU at 20Hz and acheives state-of-the-art performance, generalizing robustly to novel environments with just 3 hours of expert demonstrations.
+
+![Main Teaser](./docs/assets/mainteaser.jpg)
 
 # 📢 News
 
