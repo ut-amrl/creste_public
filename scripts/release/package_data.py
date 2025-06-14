@@ -100,6 +100,12 @@ def main(dataset_root, txt_file, N, W, output_zip):
         if full_src.exists():
             shutil.copytree(full_src, full_dst, dirs_exist_ok=True)
 
+    weights_file = "class_weights_3d_sam_dynamic_6.txt"
+    try:
+        shutil.copy2(dataset_root / weights_file, temp_dir / weights_file)
+    except FileNotFoundError:
+        print(f"Missing: {weights_file}")
+
     # Create zip
     creste_root = temp_dir / "creste"
     creste_root.mkdir(parents=True, exist_ok=True)

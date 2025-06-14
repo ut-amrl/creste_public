@@ -7,7 +7,7 @@ We use the [EfficientNet-PyTorch](https://github.com/lukemelas/EfficientNet-PyTo
 pip install efficientnet_pytorch
 ```
 
-Before proceeding, make sure that you completed **ALL** of of the data preprocessing steps in 
+Before proceeding, make sure that you completed **ALL** of of the data preprocessing steps in the [Data Preparation](./docs/DATA_PREPARATION.md) section. This includes generating the Dinov2 feature maps, SAM2 instance labels, and BEV elevation maps.
 
 ### 📷 RGB-D Backbone
 
